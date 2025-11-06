@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build C project with Homebrew clang",
+      "type": "shell",
+      "command": "clang",
+      "args": [
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-g",
+        "-I/opt/homebrew/include",
+        "-L/opt/homebrew/lib",
+        "-lSDL2-2.0.0",
+        "src/main.c",
+        "src/app.c",
+        "src/game.c",
+        "src/graphics.c",
+        "src/display.c",
+        "-o",
+        "build/main"
+      ],
+      "options": {
+        "env": {
+          "PATH": "/opt/homebrew/opt/llvm/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Compiles src/main.c using Homebrew-installed clang with LLVM include/lib paths"
+    }
+  ]
+}
+
