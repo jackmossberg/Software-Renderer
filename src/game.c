@@ -110,7 +110,7 @@ camera main_camera = {
     .near = 0.01f,
     .far = 150.0f,
     .fovy = 90.0f,
-    .position = {0.0, 0.0, 0.0},
+    .position = {0.0, 0.0, -12.0},
     .rotation = {0.0, 0.0, 0.0},
 };
 
