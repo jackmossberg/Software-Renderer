@@ -45,6 +45,30 @@ static inline void mat4_identity(mat4 m) {
   m[0][0] = m[1][1] = m[2][2] = m[3][3] = 1.0f;
 }
 
+static inline void mat4_inverse(mat4 out, const mat4 m) {
+  float det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+              m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+              m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  if (det == 0) {
+    memset(out, 0, sizeof(mat4));
+    return;
+  }
+  float inv_det = 1.0f / det;
+  out[0][0] = (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * inv_det;
+  out[0][1] = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * inv_det;
+  out[0][2] = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * inv_det;
+  out[1][0] = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * inv_det;
+  out[1][1] = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * inv_det;
+  out[1][2] = (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * inv_det;
+  out[2][0] = (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * inv_det;
+  out[2][1] = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * inv_det;
+  out[2][2] = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * inv_det;
+  out[3][0] = -(out[0][0] * m[3][0] + out[1][0] * m[3][1] + out[2][0] * m[3][2]);
+  out[3][1] = -(out[0][1] * m[3][0] + out[1][1] * m[3][1] + out[2][1] * m[3][2]);
+  out[3][2] = -(out[0][2] * m[3][0] + out[1][2] * m[3][1] + out[2][2] * m[3][2]);
+  out[3][3] = 1.0f;
+}
+
 static inline void mat4_mul(mat4 out, const mat4 a, const mat4 b) {
   for (int i = 0; i < 4; ++i)
     for (int j = 0; j < 4; ++j) {
@@ -53,7 +77,14 @@ static inline void mat4_mul(mat4 out, const mat4 a, const mat4 b) {
     }
 }
 
-static inline void mat4_transform_clip(vec4 out, vec3 v, mat4 m) {
+static inline void mat4_vec3_mul(vec3 out, const mat4 m, const vec3 v) {
+  float x = v[0], y = v[1], z = v[2];
+  out[0] = x * m[0][0] + y * m[1][0] + z * m[2][0] + m[3][0];
+  out[1] = x * m[0][1] + y * m[1][1] + z * m[2][1] + m[3][1];
+  out[2] = x * m[0][2] + y * m[1][2] + z * m[2][2] + m[3][2];
+}
+
+static void mat4_transform_clip(vec4 out, vec3 v, mat4 m) {
   float x = v[0], y = v[1], z = v[2];
   out[0] = x * m[0][0] + y * m[1][0] + z * m[2][0] + m[3][0];
   out[1] = x * m[0][1] + y * m[1][1] + z * m[2][1] + m[3][1];
@@ -317,7 +348,8 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
 
 void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
                               vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, vec3 pivot, int debug) {
+                              vec3 pos, vec3 rot, vec3 pivot, int debug) { 
+
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
   update_view_matrix(&view, c);
@@ -329,6 +361,32 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
   mat4_transform_clip(clip1, v1, mvp);
   mat4_transform_clip(clip2, v2, mvp);
   mat4_transform_clip(clip3, v3, mvp);
+
+  vec3 normal;
+  vec3 edge1, edge2;
+
+  edge1[0] = v2[0] - v1[0];
+  edge1[1] = v2[1] - v1[1];
+  edge1[2] = v2[2] - v1[2];
+  edge2[0] = v3[0] - v1[0];
+  edge2[1] = v3[1] - v1[1];
+  edge2[2] = v3[2] - v1[2];
+
+  normal[0] = edge1[1] * edge2[2] - edge1[2] * edge2[1];
+  normal[1] = edge1[2] * edge2[0] - edge1[0] * edge2[2];
+  normal[2] = edge1[0] * edge2[1] - edge1[1] * edge2[0];
+
+  float l = sqrtf(normal[0] * normal[0] + normal[1] * normal[1] +
+                     normal[2] * normal[2]);
+
+  normal[0] /= l;
+  normal[1] /= l;
+  normal[2] /= l;
+  
+  vec3 normal_world = {normal[0], normal[1], normal[2]};
+  mat4 view_inv;
+  mat4_inverse(view_inv, view);
+  mat4_vec3_mul(normal_world, view_inv, normal);
 
   if (clip1[3] <= 0 || clip2[3] <= 0 || clip3[3] <= 0)
     return;
@@ -398,13 +456,13 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
     screen[i][0] = ix;
     screen[i][1] = iy;
   }
-
+  
   for (int i = 1; i < count - 1; ++i) {
     if (debug)
       draw_wireframe_tri_to_backbuffer(surface, screen[0], screen[i],
                                        screen[i + 1], r, g, b, 1);
     else
       draw_tri_to_backbuffer(surface, screen[0], screen[i], screen[i + 1],
-                             v1[0] * 255, v2[1] * 255, v3[2] * 255, 1);
+                             normal_world[0] * 255, normal_world[1] * 255, normal_world[2] * 255, 0);
   }
 }
