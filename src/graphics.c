@@ -141,28 +141,65 @@ void update_view_matrix(mat4 *mat, camera c) {
                    c.position[2] * (-forward[2]));
 }
 
-void update_model_matrix(mat4 *mat, vec3 pos, vec3 rot) {
-  float cx = cosf(rot[0] * 3.14159265f / 180.0f);
-  float sx = sinf(rot[0] * 3.14159265f / 180.0f);
-  float cy = cosf(rot[1] * 3.14159265f / 180.0f);
-  float sy = sinf(rot[1] * 3.14159265f / 180.0f);
-  float cz = cosf(rot[2] * 3.14159265f / 180.0f);
-  float sz = sinf(rot[2] * 3.14159265f / 180.0f);
+void update_model_matrix(mat4 *mat, vec3 pos, vec3 pivot, vec3 rot_deg) {
+  const float to_rad = 3.14159265f / 180.0f;
+  float ax = rot_deg[0] * to_rad, ay = rot_deg[1] * to_rad,
+        az = rot_deg[2] * to_rad;
 
-  mat4_identity(*mat);
-  (*mat)[0][0] = cy * cz + sy * sx * sz;
-  (*mat)[0][1] = cx * sz;
-  (*mat)[0][2] = -sy * cz + cy * sx * sz;
-  (*mat)[1][0] = -cy * sz + sy * sx * cz;
-  (*mat)[1][1] = cx * cz;
-  (*mat)[1][2] = sy * sz + cy * sx * cz;
-  (*mat)[2][0] = -sx * sy;
-  (*mat)[2][1] = sx;
-  (*mat)[2][2] = cx * cy;
-  (*mat)[3][0] = pos[0];
-  (*mat)[3][1] = pos[1];
-  (*mat)[3][2] = pos[2];
-  (*mat)[3][3] = 1.0f;
+  float cx = cosf(ax), sx = sinf(ax);
+  float cy = cosf(ay), sy = sinf(ay);
+  float cz = cosf(az), sz = sinf(az);
+
+  mat4 R;
+  mat4_identity(R);
+
+  R[0][0] = cy * cz;
+  R[0][1] = cx * sz + sx * sy * cz;
+  R[0][2] = sx * sz - cx * sy * cz;
+
+  R[1][0] = -cy * sz;
+  R[1][1] = cx * cz - sx * sy * sz;
+  R[1][2] = sx * cz + cx * sy * sz;
+
+  R[2][0] = sy;
+  R[2][1] = -sx * cy;
+  R[2][2] = cx * cy;
+
+  mat4 T_pivot, T_minus_pivot;
+  mat4_identity(T_pivot);
+  mat4_identity(T_minus_pivot);
+
+  T_pivot[3][0] = pivot[0];
+  T_pivot[3][1] = pivot[1];
+  T_pivot[3][2] = pivot[2];
+
+  T_minus_pivot[3][0] = -pivot[0];
+  T_minus_pivot[3][1] = -pivot[1];
+  T_minus_pivot[3][2] = -pivot[2];
+
+  mat4 R_prime;
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 4; ++j) {
+      R_prime[i][j] = 0.0f;
+      for (int k = 0; k < 4; ++k)
+        R_prime[i][j] += R[i][k] * T_minus_pivot[k][j];
+    }
+
+  mat4 M;
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 4; ++j) {
+      M[i][j] = 0.0f;
+      for (int k = 0; k < 4; ++k)
+        M[i][j] += T_pivot[i][k] * R_prime[k][j];
+    }
+
+  M[3][0] += pos[0];
+  M[3][1] += pos[1];
+  M[3][2] += pos[2];
+
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 4; ++j)
+      (*mat)[i][j] = M[i][j];
 }
 
 void update_projection_matrix(mat4 *mat, camera c, uint16_t width,
@@ -280,9 +317,9 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
 
 void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
                               vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, int debug) {
+                              vec3 pos, vec3 rot, vec3 pivot, int debug) {
   mat4 model, view, proj, mv, mvp;
-  update_model_matrix(&model, pos, rot);
+  update_model_matrix(&model, pos, pivot, rot);
   update_view_matrix(&view, c);
   update_projection_matrix(&proj, c, surface->w, surface->h);
   mat4_mul(mv, view, model);
@@ -367,7 +404,7 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
       draw_wireframe_tri_to_backbuffer(surface, screen[0], screen[i],
                                        screen[i + 1], r, g, b, 1);
     else
-      draw_tri_to_backbuffer(surface, screen[0], screen[i], screen[i + 1], r, g,
-                             b, 0);
+      draw_tri_to_backbuffer(surface, screen[0], screen[i], screen[i + 1],
+                             v1[0] * 255, v2[1] * 255, v3[2] * 255, 1);
   }
 }
