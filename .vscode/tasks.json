@@ -1,69 +1,71 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Build C project with Homebrew clang",
-      "type": "shell",
-      "command": "clang",
-      "args": [
-        "-std=c11",
-        "-Wall",
-        "-Wextra",
-        "-g",
-        "-I/opt/homebrew/include",
-        "-L/opt/homebrew/lib",
-        "-lSDL2-2.0.0",
-        "src/main.c",
-        "src/app.c",
-        "src/game.c",
-        "src/graphics.c",
-        "src/display.c",
-        "-o",
-        "build/main"
-      ],
-      "options": {
-        "env": {
-          "PATH": "/opt/homebrew/opt/llvm/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build C project with Homebrew clang",
+            "type": "shell",
+            "command": "clang",
+            "args": [
+                "-std=c11",
+                "-Wall",
+                "-Wextra",
+                "-g",
+                "-I/opt/homebrew/include",
+                "-L/opt/homebrew/lib",
+                "-lSDL2-2.0.0",
+                "src/main.c",
+                "src/app.c",
+                "src/game.c",
+                "src/graphics.c",
+                "src/display.c",
+                "-o",
+                "build/main"
+            ],
+            "options": {
+                "env": {
+                    "PATH": "/opt/homebrew/opt/llvm/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "detail": "Compiles src/main.c using Homebrew-installed clang with LLVM include/lib paths"
+        },
+        {
+            "label": "Build C project with MinGW (bundled SDL2)",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-std=c11",
+                "-Wall",
+                "-Wextra",
+                "-g",
+                "-I${workspaceFolder}/sdl2/include",
+                "src/main.c",
+                "src/app.c",
+                "src/game.c",
+                "src/graphics.c",
+                "src/display.c",
+                "-L${workspaceFolder}/sdl2/lib/x64",
+                "-lSDL2main",
+                "-lSDL2",
+                "-o",
+                "build/main.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "windows": {},
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Compiles on Windows using MinGW g++ and bundled SDL2"
         }
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "problemMatcher": [],
-      "detail": "Compiles src/main.c using Homebrew-installed clang with LLVM include/lib paths"
-    },
-    {
-      "label": "Build C project with MinGW (bundled SDL2)",
-      "type": "shell",
-      "command": "gcc",
-      "args": [
-        "-std=c11",
-        "-Wall",
-        "-Wextra",
-        "-g",
-        "-I${workspaceFolder}/sdl2/include",
-        "src/main.c",
-        "src/app.c",
-        "src/game.c",
-        "src/graphics.c",
-        "src/display.c",
-        "-L${workspaceFolder}/sdl2/lib/x64",
-        "-lSDL2main",
-        "-lSDL2",
-        "-o",
-        "build/main.exe"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "windows": {},
-      "group": "build",
-      "problemMatcher": [
-        "$gcc"
-      ],
-      "detail": "Compiles on Windows using MinGW g++ and bundled SDL2"
-    }
-  ]
+    ]
 }
-
