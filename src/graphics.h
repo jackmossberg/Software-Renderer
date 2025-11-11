@@ -30,7 +30,7 @@ typedef struct {
 } clip_vertex;
 
 void update_view_matrix(mat4 *mat, camera c);
-void update_model_matrix(mat4 *mat, vec3 pos, vec3 rot);
+void update_model_matrix(mat4 *mat, vec3 pos, vec3 pivot, vec3 rot);
 void update_projection_matrix(mat4 *mat, camera c, uint16_t width,
                               uint16_t height);
 void draw_line_to_backbuffer(SDL_Surface *surface, uint8_t r, uint8_t g,
@@ -43,4 +43,4 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
                             uint8_t r, uint8_t g, uint8_t b, int debug);
 void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
                               vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, int debug);
+                              vec3 pos, vec3 rot, vec3 pivot, int debug);

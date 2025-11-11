@@ -1,5 +1,8 @@
 #include "display.h"
 
+#define PIXEL_I(x, y) ((y) * DEFAULT_BUFFER_WIDTH + (x))
+#define CLAMP(v, lo, hi) ((v) < (lo) ? (lo) : ((v) > (hi) ? (hi) : (v)))
+
 #define VARIFYHEAP(pointer, str, type)                                         \
   if (pointer == NULL) {                                                       \
     printf("Heap allocation error: %s\n", str);                                \
@@ -41,11 +44,16 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
   SDL_BlitScaled(display->surface, NULL, frontbuffer, &dst_rect);
 
   SDL_UpdateWindowSurface(display->pointer);
+
+  memset(display->zbuffer.value, 0, sizeof(display->zbuffer));
+
   return display;
 }
 
 void deallocate_display(SDL_display *display) {
+  VARIFYHEAP(display, "deallocate_display",)
   SDL_DestroyWindow(display->pointer);
+  SDL_Quit();
   free(display);
 }
 
@@ -82,8 +90,10 @@ void set_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b, vec2i v1,
 }
 
 void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
-               vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, int debug) {
-  draw_tri3d_to_backbuffer(display->surface, c, v1, v2, v3, r, g, b, pos, rot, debug);
+               vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot,
+               int debug) {
+  draw_tri3d_to_backbuffer(display->surface, c, v1, v2, v3, r, g, b, pos, rot,
+                           pivot, debug);
 }
 
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
