@@ -10,7 +10,7 @@ SDL_app *allocate_app(uint16_t width, uint16_t height, const char *title,
                       const char *name, void (*update_display)(SDL_display *),
                       void (*update_gameloop)(double, SDL_Event),
                       void (*init_gameloop)()) {
-  SDL_app *app = calloc(1, sizeof(SDL_app));
+  SDL_app *app = (SDL_app *)calloc(1, sizeof(SDL_app));
   VARIFYHEAP(app, "allocate_app()", NULL)
 
   app->name = name;

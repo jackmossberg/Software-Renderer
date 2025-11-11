@@ -20,7 +20,7 @@ void update_game(double deltatime, SDL_Event event) {
 
 void update_graphics(SDL_display *display) {
   (void)display;
-  clear_display(display, 25, 25, 50);
+  clear_display(display, 0, 0, 0);
 
   int mouseX, mouseY;
   SDL_GetMouseState(&mouseX, &mouseY);

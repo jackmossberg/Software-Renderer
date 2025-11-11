@@ -32,6 +32,37 @@
       },
       "problemMatcher": [],
       "detail": "Compiles src/main.c using Homebrew-installed clang with LLVM include/lib paths"
+    },
+    {
+      "label": "Build C project with MinGW (bundled SDL2)",
+      "type": "shell",
+      "command": "gcc",
+      "args": [
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-g",
+        "-I${workspaceFolder}/sdl2/include",
+        "src/main.c",
+        "src/app.c",
+        "src/game.c",
+        "src/graphics.c",
+        "src/display.c",
+        "-L${workspaceFolder}/sdl2/lib/x64",
+        "-lSDL2main",
+        "-lSDL2",
+        "-o",
+        "build/main.exe"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "windows": {},
+      "group": "build",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "detail": "Compiles on Windows using MinGW g++ and bundled SDL2"
     }
   ]
 }

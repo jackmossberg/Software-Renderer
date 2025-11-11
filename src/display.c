@@ -11,7 +11,7 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
   if (SDL_Init(SDL_INIT_VIDEO) != 0)
     SDL_Log("SDL Failure: %s", SDL_GetError());
 
-  SDL_display *display = calloc(1, sizeof(SDL_display));
+  SDL_display *display = (SDL_display *)calloc(1, sizeof(SDL_display));
   VARIFYHEAP(display, "allocate_display()", NULL)
 
   SDL_GL_SetSwapInterval(1);

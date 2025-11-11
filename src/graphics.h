@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <math.h>
 
 typedef float vec2[2];
 typedef float vec3[3];
