@@ -6,14 +6,14 @@
 
 #include "graphics.h"
 
-#define SCREEN_FPS 120
+#define SCREEN_FPS 244
 #define SCREEN_TICKS_PER_FRAME 1000 / SCREEN_FPS
 
 #ifndef DEFAULT_BUFFER_WIDTH
-#define DEFAULT_BUFFER_WIDTH 1200
+#define DEFAULT_BUFFER_WIDTH 900
 #endif
 #ifndef DEFAULT_BUFFER_HEIGHT
-#define DEFAULT_BUFFER_HEIGHT 1000
+#define DEFAULT_BUFFER_HEIGHT 800
 #endif
 
 #define DEFAULT_BUFFER_SCALE_FACTOR 4
@@ -55,5 +55,3 @@ void set_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b, vec2i v1,
 void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
                vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot, int debug);
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b);
-
-

@@ -45,7 +45,10 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 
   SDL_UpdateWindowSurface(display->pointer);
 
-  memset(display->zbuffer.value, 0, sizeof(display->zbuffer));
+  // Initialize z-buffer with maximum values
+  for (uint32_t i = 0; i < DEFAULT_BUF_LEN; i++) {
+    display->zbuffer.value[i] = 0xFFFFFFFF;
+  }
 
   return display;
 }
@@ -92,6 +95,14 @@ void set_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b, vec2i v1,
 void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
                vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot,
                int debug) {
+  draw_tri3d_to_backbuffer_zbuffered(display->surface, display->zbuffer.value,
+                                     c, v1, v2, v3, r, g, b, pos, rot, pivot,
+                                     debug);
+}
+
+void set_tri3d_no_zbuffer(SDL_display *display, camera c, uint8_t r, uint8_t g,
+                          uint8_t b, vec3 v1, vec3 v2, vec3 v3, vec3 pos,
+                          vec3 rot, vec3 pivot, int debug) {
   draw_tri3d_to_backbuffer(display->surface, c, v1, v2, v3, r, g, b, pos, rot,
                            pivot, debug);
 }
@@ -100,4 +111,7 @@ void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
   uint32_t color = SDL_MapRGB(display->surface->format, r, g, b);
   SDL_FillRect(display->surface, NULL, color);
   SDL_UnlockSurface(display->surface);
+  for (uint32_t i = 0; i < DEFAULT_BUF_LEN; i++) {
+    display->zbuffer.value[i] = 0xFFFFFFFF;
+  }
 }
