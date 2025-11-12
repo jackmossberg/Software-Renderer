@@ -652,13 +652,7 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
   normal[1] /= l;
   normal[2] /= l;
 
-  mat4 model_inv;
-  mat4_inverse(model_inv, model);
-  mat4 normal_matrix;
-  mat4_transpose(normal_matrix, model_inv);
-
-  vec3 normal_world;
-  mat4_vec3_mul(normal_world, normal_matrix, normal);
+  vec3 normal_world = {normal[0], normal[1], normal[2]};
 
   if (clip1[3] <= 0 || clip2[3] <= 0 || clip3[3] <= 0)
     return;
@@ -731,7 +725,6 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
     screen[i][1] = iy;
   }
 
-  /* Convert normal to RGB: remap [-1,1] to [0,255] */
   uint8_t normal_rgb[3];
   float r_f = (normal_world[0] + 1.0f) * 0.5f * 255.0f;
   float g_f = (normal_world[1] + 1.0f) * 0.5f * 255.0f;
