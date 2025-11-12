@@ -33,7 +33,7 @@ model test_model;
 
 void init_game() {
   init_model(&test_model, NULL, (vec3){0.0, 0.0, 0.0}, (vec3){0.0, 0.0, 0.0},
-             (vec3){1.0, 1.0, 1.0}, SHAPE_ICO_SPHERE);
+             (vec3){1.0, 1.0, 1.0}, SHAPE_CUBE);
 }
 
 void update_game(double deltatime, SDL_Event event) {
