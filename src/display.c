@@ -53,7 +53,7 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 }
 
 void deallocate_display(SDL_display *display) {
-  VARIFYHEAP(display, "deallocate_display",)
+  VARIFYHEAP(display, "deallocate_display", )
   SDL_DestroyWindow(display->pointer);
   SDL_Quit();
   free(display);

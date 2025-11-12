@@ -527,9 +527,9 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
 
   vec3 normal_world;
   mat4_vec3_mul_normal(normal_world, normal_matrix, normal);
-  
-  float normal_len = sqrtf(normal_world[0] * normal_world[0] + 
-                           normal_world[1] * normal_world[1] + 
+
+  float normal_len = sqrtf(normal_world[0] * normal_world[0] +
+                           normal_world[1] * normal_world[1] +
                            normal_world[2] * normal_world[2]);
   if (normal_len > 1e-6f) {
     normal_world[0] /= normal_len;
@@ -675,9 +675,9 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
 
   vec3 normal_world;
   mat4_vec3_mul_normal(normal_world, normal_matrix, normal);
-  
-  float normal_len = sqrtf(normal_world[0] * normal_world[0] + 
-                           normal_world[1] * normal_world[1] + 
+
+  float normal_len = sqrtf(normal_world[0] * normal_world[0] +
+                           normal_world[1] * normal_world[1] +
                            normal_world[2] * normal_world[2]);
   if (normal_len > 1e-6f) {
     normal_world[0] /= normal_len;
