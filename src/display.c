@@ -237,6 +237,42 @@ static void init_tris_ICO_SPHERE(tri *out) {
   }
 }
 
+static void init_tris_TERRAIN(tri *out) {
+  int xsize = 20;
+  int zsize = 20;
+  float scale = 1.5f;
+
+  for (int x = 0; x < xsize - 1; x++) {
+    for (int z = 0; z < zsize - 1; z++) {
+      int index = (x * (zsize - 1) + z) * 2;
+
+      out[index].v1[0] = x * scale;
+      out[index].v1[1] = 0.0f;
+      out[index].v1[2] = z * scale;
+      
+      out[index].v2[0] = x * scale;
+      out[index].v2[1] = 0.0f;
+      out[index].v2[2] = (z + 1) * scale;
+      
+      out[index].v3[0] = (x + 1) * scale;
+      out[index].v3[1] = 0.0f;
+      out[index].v3[2] = z * scale;
+      
+      out[index + 1].v1[0] = (x + 1) * scale;
+      out[index + 1].v1[1] = 0.0f;
+      out[index + 1].v1[2] = z * scale;
+      
+      out[index + 1].v2[0] = x * scale;
+      out[index + 1].v2[1] = 0.0f;
+      out[index + 1].v2[2] = (z + 1) * scale;
+      
+      out[index + 1].v3[0] = (x + 1) * scale;
+      out[index + 1].v3[1] = 0.0f;
+      out[index + 1].v3[2] = (z + 1) * scale;
+    }
+  }
+}
+
 void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
                 vec3 scale, int SHAPE) {
   if (tris == NULL) {
@@ -259,6 +295,10 @@ void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
     
     case SHAPE_ICO_SPHERE:
       init_tris_ICO_SPHERE(temp_tris);
+      break;
+
+    case SHAPE_TERRAIN:
+      init_tris_TERRAIN(temp_tris);
       break;
 
     default:

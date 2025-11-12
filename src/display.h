@@ -58,12 +58,13 @@ void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
             uint8_t g, uint8_t b));
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b);
 
-#define MAX_TRI_COUNT 250
+#define MAX_TRI_COUNT 1024
 
 #define SHAPE_NONE 0
 #define SHAPE_CUBE 1
 #define SHAPE_PYRAMID 2
 #define SHAPE_ICO_SPHERE 3
+#define SHAPE_TERRAIN 4
 
 typedef struct tri {
   vec3 v1;
