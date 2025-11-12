@@ -39,6 +39,17 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 
   display->surface = SDL_CreateRGBSurface(
       0, display->buffer_width, display->buffer_height, 32, 0, 0, 0, 0);
+  if (!display->surface) {
+    SDL_Log("Failed to create surface: %s", SDL_GetError());
+  } else {
+    SDL_Log("Created surface: w=%d h=%d pitch=%d bpp=%d MUSTLOCK=%d",
+            display->surface->w, display->surface->h, display->surface->pitch,
+            display->surface->format->BytesPerPixel,
+            SDL_MUSTLOCK(display->surface));
+    SDL_Log("Display buffer: buffer_w=%d buffer_h=%d DEFAULT_BUF_LEN=%u",
+            display->buffer_width, display->buffer_height,
+            (unsigned)DEFAULT_BUF_LEN);
+  }
   SDL_Surface *frontbuffer = SDL_GetWindowSurface(display->pointer);
   SDL_Rect dst_rect = {0, 0, frontbuffer->w, frontbuffer->h};
   SDL_BlitScaled(display->surface, NULL, frontbuffer, &dst_rect);
@@ -114,7 +125,9 @@ void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
   if (SDL_MUSTLOCK(display->surface))
     SDL_LockSurface(display->surface);
   SDL_FillRect(display->surface, NULL, color);
+  /* Clear z-buffer and sanity-check. */
   for (uint32_t i = 0; i < DEFAULT_BUF_LEN; i++) {
     display->zbuffer.value[i] = 0xFFFFFFFF;
   }
+  SDL_Log("clear_display: cleared zbuffer (len=%u)", (unsigned)DEFAULT_BUF_LEN);
 }
