@@ -31,9 +31,11 @@ static void set_pixel_zbuffered(SDL_Surface *s, uint32_t *zbuffer, uint16_t x,
   uint32_t z_int = (uint32_t)(z_clamped * 0x00FFFFFFu + 0.5f);
 
   if (z_int < zbuffer[pixel_index_z]) {
+    /* Write z-buffer first to establish depth ownership, then write color.
+       This ensures depth is committed before the pixel is marked as filled. */
+    zbuffer[pixel_index_z] = z_int;
     uint32_t v = SDL_MapRGB(s->format, r, g, b);
     ((uint32_t *)s->pixels)[pixel_index_pixels] = v;
-    zbuffer[pixel_index_z] = z_int;
   }
 }
 
