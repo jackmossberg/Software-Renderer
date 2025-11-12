@@ -30,6 +30,15 @@ static void set_pixel_zbuffered(SDL_Surface *s, uint32_t *zbuffer, uint16_t x,
   float z_clamped = fmaxf(0.0f, fminf(1.0f, z));
   uint32_t z_int = (uint32_t)(z_clamped * 4294967295.0f);
 
+  static int log_count = 0;
+  if (log_count < 5) {
+    SDL_Log("set_pixel_zbuffered: x=%d y=%d z=%f z_clamped=%f z_int=%u "
+            "zbuffer[idx]=%u pass=%d",
+            x, y, z, z_clamped, z_int, zbuffer[pixel_index_z],
+            z_int < zbuffer[pixel_index_z]);
+    log_count++;
+  }
+
   if (z_int < zbuffer[pixel_index_z]) {
     zbuffer[pixel_index_z] = z_int;
     uint32_t v = SDL_MapRGB(s->format, r, g, b);
