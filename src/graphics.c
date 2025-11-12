@@ -30,15 +30,6 @@ static void set_pixel_zbuffered(SDL_Surface *s, uint32_t *zbuffer, uint16_t x,
   float z_clamped = fmaxf(0.0f, fminf(1.0f, z));
   uint32_t z_int = (uint32_t)(z_clamped * 4294967295.0f);
 
-  static int log_count = 0;
-  if (log_count < 5) {
-    SDL_Log("set_pixel_zbuffered: x=%d y=%d z=%f z_clamped=%f z_int=%u "
-            "zbuffer[idx]=%u pass=%d",
-            x, y, z, z_clamped, z_int, zbuffer[pixel_index_z],
-            z_int < zbuffer[pixel_index_z]);
-    log_count++;
-  }
-
   if (z_int < zbuffer[pixel_index_z]) {
     zbuffer[pixel_index_z] = z_int;
     uint32_t v = SDL_MapRGB(s->format, r, g, b);
@@ -435,7 +426,6 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
   float inv = 1.0f / det;
   for (uint16_t y = sy; y <= ey; ++y)
     for (uint16_t x = sx; x <= ex; ++x) {
-      /* sample at pixel center to avoid edge/corner artifacts */
       float px = (float)x + 0.5f;
       float py = (float)y + 0.5f;
       float u =
@@ -485,7 +475,9 @@ static void draw_tri_to_backbuffer_zbuffered(
 
 void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
                               vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, vec3 pivot, int debug) {
+                              vec3 pos, vec3 rot, vec3 pivot, int debug,
+                              void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
+                                             uint8_t g, uint8_t b)) {
 
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
@@ -633,7 +625,8 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
                                         camera c, vec3 v1, vec3 v2, vec3 v3,
                                         uint8_t r, uint8_t g, uint8_t b,
                                         vec3 pos, vec3 rot, vec3 pivot,
-                                        int debug) {
+                                        int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
+            uint8_t g, uint8_t b)) {
 
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
@@ -756,15 +749,6 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
     screen[i][1] = iy;
   }
 
-  uint8_t normal_rgb[3];
-  float r_f = (normal_world[0] + 1.0f) * 0.5f * 255.0f;
-  float g_f = (normal_world[1] + 1.0f) * 0.5f * 255.0f;
-  float b_f = (normal_world[2] + 1.0f) * 0.5f * 255.0f;
-
-  normal_rgb[0] = (uint8_t)(r_f < 0.0f ? 0 : (r_f > 255.0f ? 255 : r_f));
-  normal_rgb[1] = (uint8_t)(g_f < 0.0f ? 0 : (g_f > 255.0f ? 255 : g_f));
-  normal_rgb[2] = (uint8_t)(b_f < 0.0f ? 0 : (b_f > 255.0f ? 255 : b_f));
-
   for (int i = 1; i < count - 1; ++i) {
     int ax = screen[i][0] - screen[0][0];
     int ay = screen[i][1] - screen[0][1];
@@ -774,13 +758,20 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
     if (area2 <= 0)
       continue;
 
+    vec4 FINAL_RGB;
+    shader(FINAL_RGB, normal_world, (vec2){0.0f, 0.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.5f, 0.5f, 0.5f}, r, g, b);
+
+    FINAL_RGB[0] *= FINAL_RGB[3] / 255;
+    FINAL_RGB[1] *= FINAL_RGB[3] / 255;
+    FINAL_RGB[2] *= FINAL_RGB[3] / 255;
+
     if (debug)
       draw_wireframe_tri_to_backbuffer(surface, screen[0], screen[i],
                                        screen[i + 1], r, g, b, 1);
     else
       draw_tri_to_backbuffer_zbuffered(
-          surface, zbuffer, screen[0], screen[i], screen[i + 1], normal_rgb[0],
-          normal_rgb[1], normal_rgb[2], z_over_w[0], oow[0], z_over_w[i],
+          surface, zbuffer, screen[0], screen[i], screen[i + 1], FINAL_RGB[0],
+          FINAL_RGB[1], FINAL_RGB[2], z_over_w[0], oow[0], z_over_w[i],
           oow[i], z_over_w[i + 1], oow[i + 1]);
   }
 }

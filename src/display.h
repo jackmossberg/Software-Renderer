@@ -54,5 +54,34 @@ void set_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b, vec2i v1,
              vec2i v2, vec2i v3, int debug);
 void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
                vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot,
-               int debug);
+               int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
+            uint8_t g, uint8_t b));
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b);
+
+#define MAX_TRI_COUNT 250
+
+#define SHAPE_NONE 0
+#define SHAPE_CUBE 1
+#define SHAPE_PYRAMID 2
+#define SHAPE_ICO_SPHERE 3
+
+typedef struct tri {
+  vec3 v1;
+  vec3 v2;
+  vec3 v3;
+} tri;
+
+typedef struct model {
+  vec3 position;
+  vec3 rotation;
+  vec3 scale;
+
+  tri tris[MAX_TRI_COUNT];
+
+  void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
+            uint8_t g, uint8_t b);
+} model;
+
+void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
+                vec3 scale, int SHAPE);
+void render_model(SDL_display *display, model *m, camera *c, int wframe, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r, uint8_t g, uint8_t b));
