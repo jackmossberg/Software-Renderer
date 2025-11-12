@@ -30,11 +30,17 @@ static void set_pixel_zbuffered(SDL_Surface *s, uint32_t *zbuffer, uint16_t x,
   float z_clamped = fmaxf(0.0f, fminf(1.0f, z));
   uint32_t z_int = (uint32_t)(z_clamped * 0x00FFFFFFu + 0.5f);
 
-  if (z_int < zbuffer[pixel_index_z]) {
-    uint32_t v = SDL_MapRGB(s->format, r, g, b);
-    ((uint32_t *)s->pixels)[pixel_index_pixels] = v;
-    zbuffer[pixel_index_z] = z_int;
-  }
+  uint32_t current_z;
+  do {
+    current_z = zbuffer[pixel_index_z];
+    if (z_int >= current_z) {
+      return;
+    }
+  } while (!__sync_bool_compare_and_swap(&zbuffer[pixel_index_z], current_z,
+                                          z_int));
+
+  uint32_t v = SDL_MapRGB(s->format, r, g, b);
+  ((uint32_t *)s->pixels)[pixel_index_pixels] = v;
 }
 
 static bbox2i calculate_bbox2i_from_tri(vec2i v1, vec2i v2, vec2i v3) {
