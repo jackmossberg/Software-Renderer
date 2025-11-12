@@ -52,15 +52,15 @@ void terrain_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_di
             uint8_t r, uint8_t g, uint8_t b) {
     (void)uv;
     (void)position;
-    
+
     float dot;
     dot_vec3(&dot, normal, light_dir);
     float brightness = fmaxf(0.0f, fminf(1.0f, dot));
     brightness = fminf(1.0f, brightness + 0.21f);
 
     OUT[0] = r * brightness;
-    OUT[1] = g * brightness;
-    OUT[2] = b * brightness;    
+    OUT[1] = 10.0f * brightness;
+    OUT[2] = 0.0f * brightness;
     OUT[3] = 255.0f;
 }
 
@@ -74,9 +74,9 @@ void model_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir,
     float brightness = fmaxf(0.0f, fminf(1.0f, dot));
     brightness = fminf(1.0f, brightness + 0.21f);
 
-    OUT[0] = normal[0] * 255.0f;
-    OUT[1] = normal[1] * 255.0f;
-    OUT[2] = normal[2] * 255.0f;
+    OUT[0] = r * brightness;
+    OUT[1] = g * brightness;
+    OUT[2] = b * brightness;
     OUT[3] = 255.0f;
 }
 
@@ -110,7 +110,7 @@ void init_game(SDL_display *display) {
              (vec3){0.0f, -1.5f, 5.0f},
              (vec3){0.0f, 0.0f, 0.0f},
              (vec3){1.0f, 1.0f, 1.0f},
-             SHAPE_CUBE);
+             SHAPE_ICO_SPHERE);
 }
 
 void update_game(double deltatime, SDL_Event event) {
@@ -120,8 +120,8 @@ void update_game(double deltatime, SDL_Event event) {
 void update_graphics(SDL_display *display) {
   clear_display(display, 15, 20, 45);
 
-  main_camera.rotation[0] = -45.0f;
+  main_camera.rotation[0] = 0.0f;
 
-  render_model(display, &terrain, main_player.cam, true, terrain_shader);
+  render_model(display, &terrain, main_player.cam, false, terrain_shader);
   render_model(display, &test_model, main_player.cam, false, model_shader);
 }
