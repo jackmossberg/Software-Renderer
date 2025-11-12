@@ -470,8 +470,6 @@ static void draw_tri_to_backbuffer_zbuffered(
         float interp_oow = u * oow1 + v * oow2 + w * oow3;
         if (interp_oow <= 1e-8f)
           continue;
-        /* z_over_w is already z/w (perspective-correct depth in clip space).
-           Do NOT divide by interp_oow again; just use z/w directly. */
         float z = u * z1_over_w + v * z2_over_w + w * z3_over_w;
         set_pixel_zbuffered(surface, zbuffer, x, y, r, g, b, z);
       }
@@ -733,14 +731,15 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
     screen[i][1] = iy;
   }
 
-  vec3 normal_rgb;
+  /* Convert normal to RGB: remap [-1,1] to [0,255] */
+  uint8_t normal_rgb[3];
   float r_f = (normal_world[0] + 1.0f) * 0.5f * 255.0f;
   float g_f = (normal_world[1] + 1.0f) * 0.5f * 255.0f;
   float b_f = (normal_world[2] + 1.0f) * 0.5f * 255.0f;
 
-  normal_rgb[0] = r_f < 0.0f ? 0 : (r_f > 255.0f ? 255 : (uint8_t)r_f);
-  normal_rgb[1] = g_f < 0.0f ? 0 : (g_f > 255.0f ? 255 : (uint8_t)g_f);
-  normal_rgb[2] = b_f < 0.0f ? 0 : (b_f > 255.0f ? 255 : (uint8_t)b_f);
+  normal_rgb[0] = (uint8_t)(r_f < 0.0f ? 0 : (r_f > 255.0f ? 255 : r_f));
+  normal_rgb[1] = (uint8_t)(g_f < 0.0f ? 0 : (g_f > 255.0f ? 255 : g_f));
+  normal_rgb[2] = (uint8_t)(b_f < 0.0f ? 0 : (b_f > 255.0f ? 255 : b_f));
 
   for (int i = 1; i < count - 1; ++i) {
     int ax = screen[i][0] - screen[0][0];
