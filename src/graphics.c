@@ -121,6 +121,13 @@ static inline void mat4_vec3_mul(vec3 out, const mat4 m, const vec3 v) {
   out[2] = x * m[0][2] + y * m[1][2] + z * m[2][2] + m[3][2];
 }
 
+static inline void mat4_vec3_mul_normal(vec3 out, const mat4 m, const vec3 v) {
+  float x = v[0], y = v[1], z = v[2];
+  out[0] = x * m[0][0] + y * m[1][0] + z * m[2][0];
+  out[1] = x * m[0][1] + y * m[1][1] + z * m[2][1];
+  out[2] = x * m[0][2] + y * m[1][2] + z * m[2][2];
+}
+
 static void mat4_transform_clip(vec4 out, vec3 v, mat4 m) {
   float x = v[0], y = v[1], z = v[2];
   out[0] = x * m[0][0] + y * m[1][0] + z * m[2][0] + m[3][0];
@@ -519,7 +526,16 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
   mat4_transpose(normal_matrix, model_inv);
 
   vec3 normal_world;
-  mat4_vec3_mul(normal_world, normal_matrix, normal);
+  mat4_vec3_mul_normal(normal_world, normal_matrix, normal);
+  
+  float normal_len = sqrtf(normal_world[0] * normal_world[0] + 
+                           normal_world[1] * normal_world[1] + 
+                           normal_world[2] * normal_world[2]);
+  if (normal_len > 1e-6f) {
+    normal_world[0] /= normal_len;
+    normal_world[1] /= normal_len;
+    normal_world[2] /= normal_len;
+  }
 
   if (clip1[3] <= 0 || clip2[3] <= 0 || clip3[3] <= 0)
     return;
@@ -652,7 +668,22 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
   normal[1] /= l;
   normal[2] /= l;
 
-  vec3 normal_world = {normal[0], normal[1], normal[2]};
+  mat4 model_inv;
+  mat4_inverse(model_inv, model);
+  mat4 normal_matrix;
+  mat4_transpose(normal_matrix, model_inv);
+
+  vec3 normal_world;
+  mat4_vec3_mul_normal(normal_world, normal_matrix, normal);
+  
+  float normal_len = sqrtf(normal_world[0] * normal_world[0] + 
+                           normal_world[1] * normal_world[1] + 
+                           normal_world[2] * normal_world[2]);
+  if (normal_len > 1e-6f) {
+    normal_world[0] /= normal_len;
+    normal_world[1] /= normal_len;
+    normal_world[2] /= normal_len;
+  }
 
   if (clip1[3] <= 0 || clip2[3] <= 0 || clip3[3] <= 0)
     return;
