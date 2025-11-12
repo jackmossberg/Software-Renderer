@@ -19,8 +19,8 @@
 #define DEFAULT_BUFFER_SCALE_FACTOR 4
 
 #define DEFAULT_BUF_LEN                                                        \
-  (uint32_t)((DEFAULT_BUFFER_WIDTH * DEFAULT_BUFFER_HEIGHT) *                  \
-             DEFAULT_BUFFER_SCALE_FACTOR)
+  (uint32_t)(((DEFAULT_BUFFER_WIDTH / DEFAULT_BUFFER_SCALE_FACTOR) *           \
+              (DEFAULT_BUFFER_HEIGHT / DEFAULT_BUFFER_SCALE_FACTOR)))
 typedef struct buffer {
   uint32_t value[DEFAULT_BUF_LEN];
 } buffer;
