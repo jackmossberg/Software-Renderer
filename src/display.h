@@ -53,5 +53,6 @@ void set_wframe_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b,
 void set_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b, vec2i v1,
              vec2i v2, vec2i v3, int debug);
 void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
-               vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot, int debug);
+               vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot,
+               int debug);
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b);
