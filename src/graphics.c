@@ -470,8 +470,9 @@ static void draw_tri_to_backbuffer_zbuffered(
         float interp_oow = u * oow1 + v * oow2 + w * oow3;
         if (interp_oow <= 1e-8f)
           continue;
-        float interp_zow = u * z1_over_w + v * z2_over_w + w * z3_over_w;
-        float z = interp_zow / interp_oow;
+        /* z_over_w is already z/w (perspective-correct depth in clip space).
+           Do NOT divide by interp_oow again; just use z/w directly. */
+        float z = u * z1_over_w + v * z2_over_w + w * z3_over_w;
         set_pixel_zbuffered(surface, zbuffer, x, y, r, g, b, z);
       }
     }
