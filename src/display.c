@@ -125,9 +125,7 @@ void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
   if (SDL_MUSTLOCK(display->surface))
     SDL_LockSurface(display->surface);
   SDL_FillRect(display->surface, NULL, color);
-  /* Clear z-buffer and sanity-check. */
   for (uint32_t i = 0; i < DEFAULT_BUF_LEN; i++) {
     display->zbuffer.value[i] = 0xFFFFFFFF;
   }
-  SDL_Log("clear_display: cleared zbuffer (len=%u)", (unsigned)DEFAULT_BUF_LEN);
 }
