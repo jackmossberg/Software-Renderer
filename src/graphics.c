@@ -27,15 +27,14 @@ static void set_pixel_zbuffered(SDL_Surface *s, uint32_t *zbuffer, uint16_t x,
   uint32_t pixel_index_pixels = y * (s->pitch / 4) + x;
   uint32_t pixel_index_z = y * s->w + x;
 
-    float z_clamped = fmaxf(0.0f, fminf(1.0f, z));
-    uint32_t z_int = (uint32_t)(z_clamped * 4294967295.0f);
+  float z_clamped = fmaxf(0.0f, fminf(1.0f, z));
+  uint32_t z_int = (uint32_t)(z_clamped * 4294967295.0f);
 
-    uint32_t stored = zbuffer[pixel_index_z];
-    if (z_int < stored - 1u) {
-      zbuffer[pixel_index_z] = z_int;
-      uint32_t v = SDL_MapRGB(s->format, r, g, b);
-      ((uint32_t *)s->pixels)[pixel_index_pixels] = v;
-    }
+  if (z_int < zbuffer[pixel_index_z]) {
+    zbuffer[pixel_index_z] = z_int;
+    uint32_t v = SDL_MapRGB(s->format, r, g, b);
+    ((uint32_t *)s->pixels)[pixel_index_pixels] = v;
+  }
 }
 
 static bbox2i calculate_bbox2i_from_tri(vec2i v1, vec2i v2, vec2i v3) {

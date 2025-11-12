@@ -39,17 +39,6 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 
   display->surface = SDL_CreateRGBSurface(
       0, display->buffer_width, display->buffer_height, 32, 0, 0, 0, 0);
-  if (!display->surface) {
-    SDL_Log("Failed to create surface: %s", SDL_GetError());
-  } else {
-    SDL_Log("Created surface: w=%d h=%d pitch=%d bpp=%d MUSTLOCK=%d",
-            display->surface->w, display->surface->h, display->surface->pitch,
-            display->surface->format->BytesPerPixel,
-            SDL_MUSTLOCK(display->surface));
-    SDL_Log("Display buffer: buffer_w=%d buffer_h=%d DEFAULT_BUF_LEN=%u",
-            display->buffer_width, display->buffer_height,
-            (unsigned)DEFAULT_BUF_LEN);
-  }
   SDL_Surface *frontbuffer = SDL_GetWindowSurface(display->pointer);
   SDL_Rect dst_rect = {0, 0, frontbuffer->w, frontbuffer->h};
   SDL_BlitScaled(display->surface, NULL, frontbuffer, &dst_rect);
@@ -64,7 +53,7 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 }
 
 void deallocate_display(SDL_display *display) {
-  VARIFYHEAP(display, "deallocate_display", )
+  VARIFYHEAP(display, "deallocate_display",)
   SDL_DestroyWindow(display->pointer);
   SDL_Quit();
   free(display);
