@@ -1,7 +1,7 @@
 #include <SDL2/SDL.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <math.h>
 
 typedef float vec2[2];
 typedef float vec3[3];
@@ -48,4 +48,5 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
 void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
                                         camera c, vec3 v1, vec3 v2, vec3 v3,
                                         uint8_t r, uint8_t g, uint8_t b,
-                                        vec3 pos, vec3 rot, vec3 pivot, int debug);
+                                        vec3 pos, vec3 rot, vec3 pivot,
+                                        int debug);

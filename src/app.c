@@ -40,7 +40,7 @@ void update_app(SDL_app *app) {
   Uint64 last_time = 0;
 
   int first_iter = true;
-  while (running) { 
+  while (running) {
     app->update_gameloop(deltat, event);
     app->update_display(app->display);
     cycle_display(app->display);
@@ -50,15 +50,16 @@ void update_app(SDL_app *app) {
     if (first_iter == false) {
       Uint64 current_time = SDL_GetPerformanceCounter();
       deltat = (double)(current_time - last_time) /
-                      (double)SDL_GetPerformanceFrequency();
+               (double)SDL_GetPerformanceFrequency();
       last_time = current_time;
     }
     first_iter = false;
-    
-    if (deltat > 5.0) deltat = 0.0;
-    
+
+    if (deltat > 5.0)
+      deltat = 0.0;
+
     if (SCREEN_TICKS_PER_FRAME > deltat) {
-        SDL_Delay(SCREEN_TICKS_PER_FRAME - deltat);
+      SDL_Delay(SCREEN_TICKS_PER_FRAME - deltat);
     }
 
     if (event.type == SDL_QUIT) {

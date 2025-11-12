@@ -31,8 +31,6 @@ static void set_pixel_zbuffered(SDL_Surface *s, uint32_t *zbuffer, uint16_t x,
   uint32_t z_int = (uint32_t)(z_clamped * 0x00FFFFFFu + 0.5f);
 
   if (z_int < zbuffer[pixel_index_z]) {
-    /* Write z-buffer first to establish depth ownership, then write color.
-       This ensures depth is committed before the pixel is marked as filled. */
     zbuffer[pixel_index_z] = z_int;
     uint32_t v = SDL_MapRGB(s->format, r, g, b);
     ((uint32_t *)s->pixels)[pixel_index_pixels] = v;
@@ -90,9 +88,12 @@ static inline void mat4_inverse(mat4 out, const mat4 m) {
   out[2][0] = (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * inv_det;
   out[2][1] = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * inv_det;
   out[2][2] = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * inv_det;
-  out[3][0] = -(out[0][0] * m[3][0] + out[1][0] * m[3][1] + out[2][0] * m[3][2]);
-  out[3][1] = -(out[0][1] * m[3][0] + out[1][1] * m[3][1] + out[2][1] * m[3][2]);
-  out[3][2] = -(out[0][2] * m[3][0] + out[1][2] * m[3][1] + out[2][2] * m[3][2]);
+  out[3][0] =
+      -(out[0][0] * m[3][0] + out[1][0] * m[3][1] + out[2][0] * m[3][2]);
+  out[3][1] =
+      -(out[0][1] * m[3][0] + out[1][1] * m[3][1] + out[2][1] * m[3][2]);
+  out[3][2] =
+      -(out[0][2] * m[3][0] + out[1][2] * m[3][1] + out[2][2] * m[3][2]);
   out[3][3] = 1.0f;
 }
 
@@ -120,27 +121,29 @@ static void mat4_transform_clip(vec4 out, vec3 v, mat4 m) {
 }
 
 static void clip_polygon_component(clip_vertex *input, int in_count,
-                                    clip_vertex *output, int *out_count,
-                                    int component, int positive) {
+                                   clip_vertex *output, int *out_count,
+                                   int component, int positive) {
   *out_count = 0;
-  
+
   if (in_count == 0)
     return;
-  
+
   clip_vertex prev = input[in_count - 1];
-  
+
   for (int i = 0; i < in_count; ++i) {
     clip_vertex curr = input[i];
-    
-    float prev_val = component == 0 ? prev.p[0] : (component == 1 ? prev.p[1] : prev.p[2]);
-    float curr_val = component == 0 ? curr.p[0] : (component == 1 ? curr.p[1] : curr.p[2]);
-    
+
+    float prev_val =
+        component == 0 ? prev.p[0] : (component == 1 ? prev.p[1] : prev.p[2]);
+    float curr_val =
+        component == 0 ? curr.p[0] : (component == 1 ? curr.p[1] : curr.p[2]);
+
     float prev_boundary = positive ? (prev.w - prev_val) : (prev.w + prev_val);
     float curr_boundary = positive ? (curr.w - curr_val) : (curr.w + curr_val);
-    
+
     int prev_inside = (prev_boundary >= 0);
     int curr_inside = (curr_boundary >= 0);
-    
+
     if (curr_inside) {
       if (!prev_inside) {
         float t = prev_boundary / (prev_boundary - curr_boundary);
@@ -161,7 +164,7 @@ static void clip_polygon_component(clip_vertex *input, int in_count,
       new_vert.w = prev.w + t * (curr.w - prev.w);
       output[(*out_count)++] = new_vert;
     }
-    
+
     prev = curr;
   }
 }
@@ -357,11 +360,11 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
 
     float A1 = y2f - y0;
     float B1 = x0 - x2f;
-    float C1 = x2f * y0 - x0 * y2f; 
+    float C1 = x2f * y0 - x0 * y2f;
 
     float A2 = y0 - y1f;
     float B2 = x1f - x0;
-    float C2 = x0 * y1f - x1f * y0; 
+    float C2 = x0 * y1f - x1f * y0;
 
     float start_px = (float)sx + 0.5f;
     float start_py = (float)sy + 0.5f;
@@ -374,7 +377,7 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
     float step_x_e1 = A1;
     float step_x_e2 = A2;
 
-    float eps = -1e-6f; 
+    float eps = -1e-6f;
 
     for (uint16_t y = sy; y <= ey; ++y) {
       float e0 = e0_row;
@@ -420,22 +423,21 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
       float px = (float)x + 0.5f;
       float py = (float)y + 0.5f;
       float u =
-          ((v2[1] - v3[1]) * (px - v3[0]) + (v3[0] - v2[0]) * (py - v3[1])) * inv;
+          ((v2[1] - v3[1]) * (px - v3[0]) + (v3[0] - v2[0]) * (py - v3[1])) *
+          inv;
       float v =
-          ((v3[1] - v1[1]) * (px - v3[0]) + (v1[0] - v3[0]) * (py - v3[1])) * inv;
+          ((v3[1] - v1[1]) * (px - v3[0]) + (v1[0] - v3[0]) * (py - v3[1])) *
+          inv;
       float w = 1.0f - u - v;
       if (u >= -1e-6f && v >= -1e-6f && w >= -1e-6f)
         set_pixel(surface, x, y, r, g, b);
     }
 }
 
-static void draw_tri_to_backbuffer_zbuffered(SDL_Surface *surface,
-                                             uint32_t *zbuffer, vec2i v1,
-                                             vec2i v2, vec2i v3, uint8_t r,
-                                             uint8_t g, uint8_t b,
-                                             float z1_over_w, float oow1,
-                                             float z2_over_w, float oow2,
-                                             float z3_over_w, float oow3) {
+static void draw_tri_to_backbuffer_zbuffered(
+    SDL_Surface *surface, uint32_t *zbuffer, vec2i v1, vec2i v2, vec2i v3,
+    uint8_t r, uint8_t g, uint8_t b, float z1_over_w, float oow1,
+    float z2_over_w, float oow2, float z3_over_w, float oow3) {
   bbox2i bb = calculate_bbox2i_from_tri(v1, v2, v3);
   uint16_t sx = max(0, bb.min[0]), ex = min(surface->w - 1, bb.max[0]);
   uint16_t sy = max(0, bb.min[1]), ey = min(surface->h - 1, bb.max[1]);
@@ -449,9 +451,11 @@ static void draw_tri_to_backbuffer_zbuffered(SDL_Surface *surface,
       float px = (float)x + 0.5f;
       float py = (float)y + 0.5f;
       float u =
-          ((v2[1] - v3[1]) * (px - v3[0]) + (v3[0] - v2[0]) * (py - v3[1])) * inv;
+          ((v2[1] - v3[1]) * (px - v3[0]) + (v3[0] - v2[0]) * (py - v3[1])) *
+          inv;
       float v =
-          ((v3[1] - v1[1]) * (px - v3[0]) + (v1[0] - v3[0]) * (py - v3[1])) * inv;
+          ((v3[1] - v1[1]) * (px - v3[0]) + (v1[0] - v3[0]) * (py - v3[1])) *
+          inv;
       float w = 1.0f - u - v;
       if (u >= -1e-6f && v >= -1e-6f && w >= -1e-6f) {
         float interp_oow = u * oow1 + v * oow2 + w * oow3;
@@ -466,7 +470,7 @@ static void draw_tri_to_backbuffer_zbuffered(SDL_Surface *surface,
 
 void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
                               vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, vec3 pivot, int debug) { 
+                              vec3 pos, vec3 rot, vec3 pivot, int debug) {
 
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
@@ -495,17 +499,17 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
   normal[2] = edge1[0] * edge2[1] - edge1[1] * edge2[0];
 
   float l = sqrtf(normal[0] * normal[0] + normal[1] * normal[1] +
-                     normal[2] * normal[2]);
+                  normal[2] * normal[2]);
 
   normal[0] /= l;
   normal[1] /= l;
   normal[2] /= l;
-  
+
   mat4 model_inv;
   mat4_inverse(model_inv, model);
   mat4 normal_matrix;
   mat4_transpose(normal_matrix, model_inv);
-  
+
   vec3 normal_world;
   mat4_vec3_mul(normal_world, normal_matrix, normal);
 
@@ -514,23 +518,31 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
 
   clip_vertex input_verts[6], output_verts[6];
   int count = 3;
-  input_verts[0] = (clip_vertex){.p = {clip1[0], clip1[1], clip1[2]}, .w = clip1[3]};
-  input_verts[1] = (clip_vertex){.p = {clip2[0], clip2[1], clip2[2]}, .w = clip2[3]};
-  input_verts[2] = (clip_vertex){.p = {clip3[0], clip3[1], clip3[2]}, .w = clip3[3]};
+  input_verts[0] =
+      (clip_vertex){.p = {clip1[0], clip1[1], clip1[2]}, .w = clip1[3]};
+  input_verts[1] =
+      (clip_vertex){.p = {clip2[0], clip2[1], clip2[2]}, .w = clip2[3]};
+  input_verts[2] =
+      (clip_vertex){.p = {clip3[0], clip3[1], clip3[2]}, .w = clip3[3]};
 
   clip_vertex temp[6];
   int temp_count;
-  
+
   clip_polygon_component(input_verts, count, output_verts, &temp_count, 0, 0);
-  if (temp_count < 3) return; 
+  if (temp_count < 3)
+    return;
   clip_polygon_component(output_verts, temp_count, temp, &count, 0, 1);
-  if (count < 3) return; 
+  if (count < 3)
+    return;
   clip_polygon_component(temp, count, output_verts, &temp_count, 1, 0);
-  if (temp_count < 3) return; 
+  if (temp_count < 3)
+    return;
   clip_polygon_component(output_verts, temp_count, temp, &count, 1, 1);
-  if (count < 3) return; 
+  if (count < 3)
+    return;
   clip_polygon_component(temp, count, output_verts, &temp_count, 2, 1);
-  if (temp_count < 3) return;
+  if (temp_count < 3)
+    return;
 
   clip_vertex verts[6];
   count = temp_count;
@@ -565,12 +577,12 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
     screen[i][0] = ix;
     screen[i][1] = iy;
   }
-  
+
   vec3 normal_rgb;
   float r_f = (normal_world[0] + 1.0f) * 0.5f * 255.0f;
   float g_f = (normal_world[1] + 1.0f) * 0.5f * 255.0f;
   float b_f = (normal_world[2] + 1.0f) * 0.5f * 255.0f;
-  
+
   normal_rgb[0] = r_f < 0.0f ? 0 : (r_f > 255.0f ? 255 : (uint8_t)r_f);
   normal_rgb[1] = g_f < 0.0f ? 0 : (g_f > 255.0f ? 255 : (uint8_t)g_f);
   normal_rgb[2] = b_f < 0.0f ? 0 : (b_f > 255.0f ? 255 : (uint8_t)b_f);
@@ -596,7 +608,8 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
 void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
                                         camera c, vec3 v1, vec3 v2, vec3 v3,
                                         uint8_t r, uint8_t g, uint8_t b,
-                                        vec3 pos, vec3 rot, vec3 pivot, int debug) { 
+                                        vec3 pos, vec3 rot, vec3 pivot,
+                                        int debug) {
 
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
@@ -625,17 +638,17 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
   normal[2] = edge1[0] * edge2[1] - edge1[1] * edge2[0];
 
   float l = sqrtf(normal[0] * normal[0] + normal[1] * normal[1] +
-                     normal[2] * normal[2]);
+                  normal[2] * normal[2]);
 
   normal[0] /= l;
   normal[1] /= l;
   normal[2] /= l;
-  
+
   mat4 model_inv;
   mat4_inverse(model_inv, model);
   mat4 normal_matrix;
   mat4_transpose(normal_matrix, model_inv);
-  
+
   vec3 normal_world;
   mat4_vec3_mul(normal_world, normal_matrix, normal);
 
@@ -644,23 +657,31 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
 
   clip_vertex input_verts[6], output_verts[6];
   int count = 3;
-  input_verts[0] = (clip_vertex){.p = {clip1[0], clip1[1], clip1[2]}, .w = clip1[3]};
-  input_verts[1] = (clip_vertex){.p = {clip2[0], clip2[1], clip2[2]}, .w = clip2[3]};
-  input_verts[2] = (clip_vertex){.p = {clip3[0], clip3[1], clip3[2]}, .w = clip3[3]};
+  input_verts[0] =
+      (clip_vertex){.p = {clip1[0], clip1[1], clip1[2]}, .w = clip1[3]};
+  input_verts[1] =
+      (clip_vertex){.p = {clip2[0], clip2[1], clip2[2]}, .w = clip2[3]};
+  input_verts[2] =
+      (clip_vertex){.p = {clip3[0], clip3[1], clip3[2]}, .w = clip3[3]};
 
   clip_vertex temp[6];
   int temp_count;
-  
+
   clip_polygon_component(input_verts, count, output_verts, &temp_count, 0, 0);
-  if (temp_count < 3) return;
+  if (temp_count < 3)
+    return;
   clip_polygon_component(output_verts, temp_count, temp, &count, 0, 1);
-  if (count < 3) return; 
+  if (count < 3)
+    return;
   clip_polygon_component(temp, count, output_verts, &temp_count, 1, 0);
-  if (temp_count < 3) return;
+  if (temp_count < 3)
+    return;
   clip_polygon_component(output_verts, temp_count, temp, &count, 1, 1);
-  if (count < 3) return;
+  if (count < 3)
+    return;
   clip_polygon_component(temp, count, output_verts, &temp_count, 2, 1);
-  if (temp_count < 3) return;
+  if (temp_count < 3)
+    return;
 
   clip_vertex verts[6];
   count = temp_count;
@@ -701,12 +722,12 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
     screen[i][0] = ix;
     screen[i][1] = iy;
   }
-  
+
   vec3 normal_rgb;
   float r_f = (normal_world[0] + 1.0f) * 0.5f * 255.0f;
   float g_f = (normal_world[1] + 1.0f) * 0.5f * 255.0f;
   float b_f = (normal_world[2] + 1.0f) * 0.5f * 255.0f;
-  
+
   normal_rgb[0] = r_f < 0.0f ? 0 : (r_f > 255.0f ? 255 : (uint8_t)r_f);
   normal_rgb[1] = g_f < 0.0f ? 0 : (g_f > 255.0f ? 255 : (uint8_t)g_f);
   normal_rgb[2] = b_f < 0.0f ? 0 : (b_f > 255.0f ? 255 : (uint8_t)b_f);
@@ -724,11 +745,9 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
       draw_wireframe_tri_to_backbuffer(surface, screen[0], screen[i],
                                        screen[i + 1], r, g, b, 1);
     else
-      draw_tri_to_backbuffer_zbuffered(surface, zbuffer, screen[0], screen[i],
-                                       screen[i + 1], normal_rgb[0],
-                                       normal_rgb[1], normal_rgb[2],
-                                       z_over_w[0], oow[0],
-                                       z_over_w[i], oow[i],
-                                       z_over_w[i + 1], oow[i + 1]);
+      draw_tri_to_backbuffer_zbuffered(
+          surface, zbuffer, screen[0], screen[i], screen[i + 1], normal_rgb[0],
+          normal_rgb[1], normal_rgb[2], z_over_w[0], oow[0], z_over_w[i],
+          oow[i], z_over_w[i + 1], oow[i + 1]);
   }
 }

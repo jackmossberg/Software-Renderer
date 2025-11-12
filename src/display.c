@@ -45,7 +45,6 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 
   SDL_UpdateWindowSurface(display->pointer);
 
-  // Initialize z-buffer with maximum values
   for (uint32_t i = 0; i < DEFAULT_BUF_LEN; i++) {
     display->zbuffer.value[i] = 0xFFFFFFFF;
   }
@@ -54,7 +53,7 @@ SDL_display *allocate_display(uint16_t width, uint16_t height,
 }
 
 void deallocate_display(SDL_display *display) {
-  VARIFYHEAP(display, "deallocate_display",)
+  VARIFYHEAP(display, "deallocate_display", )
   SDL_DestroyWindow(display->pointer);
   SDL_Quit();
   free(display);
@@ -112,8 +111,6 @@ void set_tri3d_no_zbuffer(SDL_display *display, camera c, uint8_t r, uint8_t g,
 
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
   uint32_t color = SDL_MapRGB(display->surface->format, r, g, b);
-  /* Lock the surface for direct pixel access for the rest of the frame.
-     We'll unlock in cycle_display once rendering is complete. */
   if (SDL_MUSTLOCK(display->surface))
     SDL_LockSurface(display->surface);
   SDL_FillRect(display->surface, NULL, color);
