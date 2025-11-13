@@ -110,7 +110,7 @@ void init_game(SDL_display *display) {
              (vec3){0.0f, -1.5f, 5.0f},
              (vec3){0.0f, 0.0f, 0.0f},
              (vec3){1.0f, 1.0f, 1.0f},
-             SHAPE_ICO_SPHERE);
+             SHAPE_CUBE);
 }
 
 void update_game(double deltatime, SDL_Event event) {
@@ -121,6 +121,7 @@ void update_graphics(SDL_display *display) {
   clear_display(display, 15, 20, 45);
 
   main_camera.rotation[0] = 0.0f;
+  test_model.rotation[1] += 0.5f;
 
   render_model(display, &terrain, main_player.cam, false, terrain_shader);
   render_model(display, &test_model, main_player.cam, false, model_shader);

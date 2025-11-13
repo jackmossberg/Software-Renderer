@@ -444,14 +444,17 @@ static void draw_tri_to_backbuffer_zbuffered(
     SDL_Surface *surface, uint32_t *zbuffer, vec2i v1, vec2i v2, vec2i v3,
     uint8_t r, uint8_t g, uint8_t b, float z1_over_w, float oow1,
     float z2_over_w, float oow2, float z3_over_w, float oow3) {
+
   bbox2i bb = calculate_bbox2i_from_tri(v1, v2, v3);
   uint16_t sx = max(0, bb.min[0]), ex = min(surface->w - 1, bb.max[0]);
   uint16_t sy = max(0, bb.min[1]), ey = min(surface->h - 1, bb.max[1]);
+
   float det =
       (v2[1] - v3[1]) * (v1[0] - v3[0]) + (v3[0] - v2[0]) * (v1[1] - v3[1]);
   if (fabsf(det) < 1e-8f)
     return;
   float inv = 1.0f / det;
+
   for (uint16_t y = sy; y <= ey; ++y)
     for (uint16_t x = sx; x <= ex; ++x) {
       float px = (float)x + 0.5f;
@@ -463,10 +466,12 @@ static void draw_tri_to_backbuffer_zbuffered(
           ((v3[1] - v1[1]) * (px - v3[0]) + (v1[0] - v3[0]) * (py - v3[1])) *
           inv;
       float w = 1.0f - u - v;
+
       if (u >= -1e-6f && v >= -1e-6f && w >= -1e-6f) {
         float interp_oow = u * oow1 + v * oow2 + w * oow3;
         if (interp_oow <= 1e-8f)
           continue;
+
         float z = u * z1_over_w + v * z2_over_w + w * z3_over_w;
         set_pixel_zbuffered(surface, zbuffer, x, y, r, g, b, z);
       }

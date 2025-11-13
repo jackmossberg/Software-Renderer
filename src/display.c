@@ -322,7 +322,7 @@ void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
   model->scale[0] = scale[0];
   model->scale[1] = scale[1];
   model->scale[2] = scale[2];
-  model->shader = NULL;
+  model->geometry_shader = NULL;
 
   for (int i = 0; i < MAX_TRI_COUNT; i++) {
     model->tris[i].v1[0] *= model->scale[0];

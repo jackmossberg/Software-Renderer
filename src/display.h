@@ -79,7 +79,7 @@ typedef struct model {
 
   tri tris[MAX_TRI_COUNT];
 
-  void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
+  void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
             uint8_t g, uint8_t b);
 } model;
 
