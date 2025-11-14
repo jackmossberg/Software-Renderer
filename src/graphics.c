@@ -474,7 +474,7 @@ static void draw_tri_to_backbuffer_zbuffered(
         if (interp_oow <= 1e-8f)
           continue;
 
-        vec4 IN = (vec4){r, g, b, 255.0f};
+        vec4 IN = {r, g, b, 255.0f};
         vec4 FINAL_RGB;
         fragment_shader(FINAL_RGB, IN, (vec2){u, v}, (vec3){u, v, w}, normal);
 

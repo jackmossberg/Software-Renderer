@@ -117,7 +117,6 @@ void init_game() {
   main_player.position[1] = -7.0f;
   main_player.position[2] = -7.0f;
 
-
   init_model(&terrain, NULL,
              (vec3){-15.0f, 0.0f, -15.0f},
              (vec3){0.0f, 0.0f, 0.0f},
