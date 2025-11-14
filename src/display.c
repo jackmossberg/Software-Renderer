@@ -96,19 +96,26 @@ void set_tri(SDL_display *display, uint8_t r, uint8_t g, uint8_t b, vec2i v1,
 
 void set_tri3d(SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b,
                vec3 v1, vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot,
-               int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-            uint8_t g, uint8_t b)) {
+               int debug,
+               void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv,
+                                       vec3 position, vec3 light_dir, uint8_t r,
+                                       uint8_t g, uint8_t b),
+               void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv,
+                                       vec3 position, vec3 normal)) {
   draw_tri3d_to_backbuffer_zbuffered(display->surface, display->zbuffer.value,
                                      c, v1, v2, v3, r, g, b, pos, rot, pivot,
-                                     debug, shader);
+                                     debug, geometry_shader, fragment_shader);
 }
 
-void set_tri3d_no_zbuffer(SDL_display *display, camera c, uint8_t r, uint8_t g,
-                          uint8_t b, vec3 v1, vec3 v2, vec3 v3, vec3 pos,
-                          vec3 rot, vec3 pivot, int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-            uint8_t g, uint8_t b)) {
+void set_tri3d_no_zbuffer(
+    SDL_display *display, camera c, uint8_t r, uint8_t g, uint8_t b, vec3 v1,
+    vec3 v2, vec3 v3, vec3 pos, vec3 rot, vec3 pivot, int debug,
+    void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position,
+                            vec3 light_dir, uint8_t r, uint8_t g, uint8_t b),
+    void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                            vec3 normal)) {
   draw_tri3d_to_backbuffer(display->surface, c, v1, v2, v3, r, g, b, pos, rot,
-                           pivot, debug, shader);
+                           pivot, debug, geometry_shader, fragment_shader);
 }
 
 void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
@@ -123,23 +130,47 @@ void clear_display(SDL_display *display, uint8_t r, uint8_t g, uint8_t b) {
 
 static void init_tris_CUBE(tri *out) {
   static tri cube_tris[12] = {
-    {.v1 = {-0.5f, -0.5f, 0.5f}, .v2 = {0.5f, -0.5f, 0.5f}, .v3 = {0.5f, 0.5f, 0.5f}},
-    {.v1 = {-0.5f, -0.5f, 0.5f}, .v2 = {0.5f, 0.5f, 0.5f}, .v3 = {-0.5f, 0.5f, 0.5f}},
-    
-    {.v1 = {0.5f, -0.5f, -0.5f}, .v2 = {-0.5f, -0.5f, -0.5f}, .v3 = {-0.5f, 0.5f, -0.5f}},
-    {.v1 = {0.5f, -0.5f, -0.5f}, .v2 = {-0.5f, 0.5f, -0.5f}, .v3 = {0.5f, 0.5f, -0.5f}},
-    
-    {.v1 = {-0.5f, 0.5f, -0.5f}, .v2 = {-0.5f, 0.5f, 0.5f}, .v3 = {0.5f, 0.5f, 0.5f}},
-    {.v1 = {-0.5f, 0.5f, -0.5f}, .v2 = {0.5f, 0.5f, 0.5f}, .v3 = {0.5f, 0.5f, -0.5f}},
-    
-    {.v1 = {-0.5f, -0.5f, -0.5f}, .v2 = {0.5f, -0.5f, -0.5f}, .v3 = {0.5f, -0.5f, 0.5f}},
-    {.v1 = {-0.5f, -0.5f, -0.5f}, .v2 = {0.5f, -0.5f, 0.5f}, .v3 = {-0.5f, -0.5f, 0.5f}},
-    
-    {.v1 = {0.5f, -0.5f, -0.5f}, .v2 = {0.5f, -0.5f, 0.5f}, .v3 = {0.5f, 0.5f, 0.5f}},
-    {.v1 = {0.5f, -0.5f, -0.5f}, .v2 = {0.5f, 0.5f, 0.5f}, .v3 = {0.5f, 0.5f, -0.5f}},
-    
-    {.v1 = {-0.5f, -0.5f, 0.5f}, .v2 = {-0.5f, -0.5f, -0.5f}, .v3 = {-0.5f, 0.5f, -0.5f}},
-    {.v1 = {-0.5f, -0.5f, 0.5f}, .v2 = {-0.5f, 0.5f, -0.5f}, .v3 = {-0.5f, 0.5f, 0.5f}},
+      {.v1 = {-0.5f, -0.5f, 0.5f},
+       .v2 = {0.5f, -0.5f, 0.5f},
+       .v3 = {0.5f, 0.5f, 0.5f}},
+      {.v1 = {-0.5f, -0.5f, 0.5f},
+       .v2 = {0.5f, 0.5f, 0.5f},
+       .v3 = {-0.5f, 0.5f, 0.5f}},
+
+      {.v1 = {0.5f, -0.5f, -0.5f},
+       .v2 = {-0.5f, -0.5f, -0.5f},
+       .v3 = {-0.5f, 0.5f, -0.5f}},
+      {.v1 = {0.5f, -0.5f, -0.5f},
+       .v2 = {-0.5f, 0.5f, -0.5f},
+       .v3 = {0.5f, 0.5f, -0.5f}},
+
+      {.v1 = {-0.5f, 0.5f, -0.5f},
+       .v2 = {-0.5f, 0.5f, 0.5f},
+       .v3 = {0.5f, 0.5f, 0.5f}},
+      {.v1 = {-0.5f, 0.5f, -0.5f},
+       .v2 = {0.5f, 0.5f, 0.5f},
+       .v3 = {0.5f, 0.5f, -0.5f}},
+
+      {.v1 = {-0.5f, -0.5f, -0.5f},
+       .v2 = {0.5f, -0.5f, -0.5f},
+       .v3 = {0.5f, -0.5f, 0.5f}},
+      {.v1 = {-0.5f, -0.5f, -0.5f},
+       .v2 = {0.5f, -0.5f, 0.5f},
+       .v3 = {-0.5f, -0.5f, 0.5f}},
+
+      {.v1 = {0.5f, -0.5f, -0.5f},
+       .v2 = {0.5f, -0.5f, 0.5f},
+       .v3 = {0.5f, 0.5f, 0.5f}},
+      {.v1 = {0.5f, -0.5f, -0.5f},
+       .v2 = {0.5f, 0.5f, 0.5f},
+       .v3 = {0.5f, 0.5f, -0.5f}},
+
+      {.v1 = {-0.5f, -0.5f, 0.5f},
+       .v2 = {-0.5f, -0.5f, -0.5f},
+       .v3 = {-0.5f, 0.5f, -0.5f}},
+      {.v1 = {-0.5f, -0.5f, 0.5f},
+       .v2 = {-0.5f, 0.5f, -0.5f},
+       .v3 = {-0.5f, 0.5f, 0.5f}},
   };
   for (int i = 0; i < 12; i++) {
     out[i] = cube_tris[i];
@@ -148,16 +179,28 @@ static void init_tris_CUBE(tri *out) {
 
 static void init_tris_PYRAMID(tri *out) {
   static tri pyramid_tris[6] = {
-    {.v1 = {-0.5f, -0.5f, -0.5f}, .v2 = {0.5f, -0.5f, -0.5f}, .v3 = {0.5f, -0.5f, 0.5f}},
-    {.v1 = {-0.5f, -0.5f, -0.5f}, .v2 = {0.5f, -0.5f, 0.5f}, .v3 = {-0.5f, -0.5f, 0.5f}},
-    
-    {.v1 = {-0.5f, -0.5f, 0.5f}, .v2 = {0.5f, -0.5f, 0.5f}, .v3 = {0.0f, 0.5f, 0.0f}},
+      {.v1 = {-0.5f, -0.5f, -0.5f},
+       .v2 = {0.5f, -0.5f, -0.5f},
+       .v3 = {0.5f, -0.5f, 0.5f}},
+      {.v1 = {-0.5f, -0.5f, -0.5f},
+       .v2 = {0.5f, -0.5f, 0.5f},
+       .v3 = {-0.5f, -0.5f, 0.5f}},
 
-    {.v1 = {0.5f, -0.5f, 0.5f}, .v2 = {0.5f, -0.5f, -0.5f}, .v3 = {0.0f, 0.5f, 0.0f}},
-    
-    {.v1 = {0.5f, -0.5f, -0.5f}, .v2 = {-0.5f, -0.5f, -0.5f}, .v3 = {0.0f, 0.5f, 0.0f}},
-    
-    {.v1 = {-0.5f, -0.5f, -0.5f}, .v2 = {-0.5f, -0.5f, 0.5f}, .v3 = {0.0f, 0.5f, 0.0f}},
+      {.v1 = {-0.5f, -0.5f, 0.5f},
+       .v2 = {0.5f, -0.5f, 0.5f},
+       .v3 = {0.0f, 0.5f, 0.0f}},
+
+      {.v1 = {0.5f, -0.5f, 0.5f},
+       .v2 = {0.5f, -0.5f, -0.5f},
+       .v3 = {0.0f, 0.5f, 0.0f}},
+
+      {.v1 = {0.5f, -0.5f, -0.5f},
+       .v2 = {-0.5f, -0.5f, -0.5f},
+       .v3 = {0.0f, 0.5f, 0.0f}},
+
+      {.v1 = {-0.5f, -0.5f, -0.5f},
+       .v2 = {-0.5f, -0.5f, 0.5f},
+       .v3 = {0.0f, 0.5f, 0.0f}},
   };
   for (int i = 0; i < 6; i++) {
     out[i] = pyramid_tris[i];
@@ -166,28 +209,22 @@ static void init_tris_PYRAMID(tri *out) {
 
 static void init_tris_ICO_SPHERE(tri *out) {
   float phi = (1.0f + sqrtf(5.0f)) * 0.5f;
-  //float inv_phi = 1.0f / phi;
-  
-  vec3 vertices[12] = {
-    {-1.0f,  phi,  0.0f},
-    { 1.0f,  phi,  0.0f},
-    {-1.0f, -phi,  0.0f},
-    { 1.0f, -phi,  0.0f},
+  // float inv_phi = 1.0f / phi;
 
-    { 0.0f, -1.0f,  phi},
-    { 0.0f,  1.0f,  phi},
-    { 0.0f, -1.0f, -phi},
-    { 0.0f,  1.0f, -phi},
-    
-    { phi,  0.0f, -1.0f},
-    { phi,  0.0f,  1.0f},
-    {-phi,  0.0f, -1.0f},
-    {-phi,  0.0f,  1.0f},
+  vec3 vertices[12] = {
+      {-1.0f, phi, 0.0f},  {1.0f, phi, 0.0f},
+      {-1.0f, -phi, 0.0f}, {1.0f, -phi, 0.0f},
+
+      {0.0f, -1.0f, phi},  {0.0f, 1.0f, phi},
+      {0.0f, -1.0f, -phi}, {0.0f, 1.0f, -phi},
+
+      {phi, 0.0f, -1.0f},  {phi, 0.0f, 1.0f},
+      {-phi, 0.0f, -1.0f}, {-phi, 0.0f, 1.0f},
   };
-  
+
   for (int i = 0; i < 12; i++) {
-    float len = sqrtf(vertices[i][0] * vertices[i][0] + 
-                      vertices[i][1] * vertices[i][1] + 
+    float len = sqrtf(vertices[i][0] * vertices[i][0] +
+                      vertices[i][1] * vertices[i][1] +
                       vertices[i][2] * vertices[i][2]);
     if (len > 0.0f) {
       vertices[i][0] /= len;
@@ -195,42 +232,26 @@ static void init_tris_ICO_SPHERE(tri *out) {
       vertices[i][2] /= len;
     }
   }
-  
-  int indices[20][3] = {
-    {0, 11, 5},
-    {0, 5, 1},
-    {0, 1, 7},
-    {0, 7, 10},
-    {0, 10, 11},
-    
-    {1, 5, 9},
-    {5, 11, 4},
-    {11, 10, 2},
-    {10, 7, 6},
-    {7, 1, 8},
 
-    {3, 9, 4},
-    {3, 4, 2},
-    {3, 2, 6},
-    {3, 6, 8},
-    {3, 8, 9},
-    
-    {4, 9, 5},
-    {2, 4, 11},
-    {6, 2, 10},
-    {8, 6, 7},
-    {9, 8, 1},
+  int indices[20][3] = {
+      {0, 11, 5}, {0, 5, 1},  {0, 1, 7},   {0, 7, 10}, {0, 10, 11},
+
+      {1, 5, 9},  {5, 11, 4}, {11, 10, 2}, {10, 7, 6}, {7, 1, 8},
+
+      {3, 9, 4},  {3, 4, 2},  {3, 2, 6},   {3, 6, 8},  {3, 8, 9},
+
+      {4, 9, 5},  {2, 4, 11}, {6, 2, 10},  {8, 6, 7},  {9, 8, 1},
   };
-  
+
   for (int i = 0; i < 20; i++) {
     out[i].v1[0] = vertices[indices[i][0]][0];
     out[i].v1[1] = vertices[indices[i][0]][1];
     out[i].v1[2] = vertices[indices[i][0]][2];
-    
+
     out[i].v2[0] = vertices[indices[i][1]][0];
     out[i].v2[1] = vertices[indices[i][1]][1];
     out[i].v2[2] = vertices[indices[i][1]][2];
-    
+
     out[i].v3[0] = vertices[indices[i][2]][0];
     out[i].v3[1] = vertices[indices[i][2]][1];
     out[i].v3[2] = vertices[indices[i][2]][2];
@@ -249,23 +270,23 @@ static void init_tris_TERRAIN(tri *out) {
       out[index].v1[0] = x * scale;
       out[index].v1[1] = 0.0f;
       out[index].v1[2] = z * scale;
-      
+
       out[index].v2[0] = x * scale;
       out[index].v2[1] = 0.0f;
       out[index].v2[2] = (z + 1) * scale;
-      
+
       out[index].v3[0] = (x + 1) * scale;
       out[index].v3[1] = 0.0f;
       out[index].v3[2] = z * scale;
-      
+
       out[index + 1].v1[0] = (x + 1) * scale;
       out[index + 1].v1[1] = 0.0f;
       out[index + 1].v1[2] = z * scale;
-      
+
       out[index + 1].v2[0] = x * scale;
       out[index + 1].v2[1] = 0.0f;
       out[index + 1].v2[2] = (z + 1) * scale;
-      
+
       out[index + 1].v3[0] = (x + 1) * scale;
       out[index + 1].v3[1] = 0.0f;
       out[index + 1].v3[2] = (z + 1) * scale;
@@ -282,17 +303,16 @@ void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
       temp_tris[i].v2[0] = temp_tris[i].v2[1] = temp_tris[i].v2[2] = 0.0f;
       temp_tris[i].v3[0] = temp_tris[i].v3[1] = temp_tris[i].v3[2] = 0.0f;
     }
-    
-    switch (SHAPE)
-    {
+
+    switch (SHAPE) {
     case SHAPE_CUBE:
       init_tris_CUBE(temp_tris);
       break;
-    
+
     case SHAPE_PYRAMID:
       init_tris_PYRAMID(temp_tris);
       break;
-    
+
     case SHAPE_ICO_SPHERE:
       init_tris_ICO_SPHERE(temp_tris);
       break;
@@ -304,7 +324,7 @@ void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
     default:
       break;
     }
-    
+
     for (int i = 0; i < MAX_TRI_COUNT; i++) {
       model->tris[i] = temp_tris[i];
     }
@@ -322,7 +342,6 @@ void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
   model->scale[0] = scale[0];
   model->scale[1] = scale[1];
   model->scale[2] = scale[2];
-  model->geometry_shader = NULL;
 
   for (int i = 0; i < MAX_TRI_COUNT; i++) {
     model->tris[i].v1[0] *= model->scale[0];
@@ -380,8 +399,12 @@ void init_model(model *model, tri *tris, vec3 position, vec3 rotation,
   }
 }
 
-void render_model(SDL_display *display, model *m, camera *c, int wframe, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-            uint8_t g, uint8_t b)) {
+void render_model(SDL_display *display, model *m, camera *c, int wframe,
+                  void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv,
+                                          vec3 position, vec3 light_dir,
+                                          uint8_t r, uint8_t g, uint8_t b),
+                  void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv,
+                                          vec3 position, vec3 normal)) {
   for (int i = 0; i < MAX_TRI_COUNT; i++) {
     if (m->tris[i].v1[0] == 0.0f && m->tris[i].v1[1] == 0.0f &&
         m->tris[i].v1[2] == 0.0f && m->tris[i].v2[0] == 0.0f &&
@@ -391,7 +414,7 @@ void render_model(SDL_display *display, model *m, camera *c, int wframe, void (*
       continue;
     }
     set_tri3d(display, *c, 255, 255, 255, m->tris[i].v1, m->tris[i].v2,
-              m->tris[i].v3, m->position, m->rotation,
-              (vec3){0.0, 0.0f, 0.0f}, wframe, shader);
+              m->tris[i].v3, m->position, m->rotation, (vec3){0.0, 0.0f, 0.0f},
+              wframe, geometry_shader, fragment_shader);
   }
 }

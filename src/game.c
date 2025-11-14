@@ -48,7 +48,7 @@ void update_player_controller(player *p, double deltatime, SDL_Event event) {
   p->cam->position[2] = p->position[2];
 }
 
-void terrain_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, 
+void terrain_geo_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, 
             uint8_t r, uint8_t g, uint8_t b) {
     (void)uv;
     (void)position;
@@ -59,12 +59,21 @@ void terrain_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_di
     brightness = fminf(1.0f, brightness + 0.21f);
 
     OUT[0] = r * brightness;
-    OUT[1] = 10.0f * brightness;
-    OUT[2] = 0.0f * brightness;
+    OUT[1] = g * brightness;
+    OUT[2] = b * brightness;
     OUT[3] = 255.0f;
 }
 
-void model_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, 
+void terrain_frag_shader(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                          vec3 normal) {
+    OUT[0] = position[0] * IN[0];
+    OUT[1] = position[1] * IN[1];
+    OUT[2] = position[2] * IN[2];
+
+    OUT[3] = IN[3];
+}
+
+void model_geo_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, 
             uint8_t r, uint8_t g, uint8_t b) {
     (void)uv;
     (void)position;
@@ -77,7 +86,18 @@ void model_shader(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir,
     OUT[0] = r * brightness;
     OUT[1] = g * brightness;
     OUT[2] = b * brightness;
+    
     OUT[3] = 255.0f;
+}
+
+
+void model_frag_shader(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                          vec3 normal) { 
+    OUT[0] = position[0] * IN[0];
+    OUT[1] = position[1] * IN[1];
+    OUT[2] = position[2] * IN[2];
+
+    OUT[3] = IN[3];
 }
 
 camera main_camera = {
@@ -91,13 +111,11 @@ camera main_camera = {
 model test_model;
 model terrain;
 
-void init_game(SDL_display *display) {
-  (void)display;
-
+void init_game() {
   main_player.cam = &main_camera;
   main_player.position[0] = 0.0f;
   main_player.position[1] = -7.0f;
-  main_player.position[2] = 0.0f;
+  main_player.position[2] = -7.0f;
 
 
   init_model(&terrain, NULL,
@@ -123,6 +141,6 @@ void update_graphics(SDL_display *display) {
   main_camera.rotation[0] = 0.0f;
   test_model.rotation[1] += 0.5f;
 
-  render_model(display, &terrain, main_player.cam, false, terrain_shader);
-  render_model(display, &test_model, main_player.cam, false, model_shader);
+  render_model(display, &terrain, main_player.cam, false, terrain_geo_shader, terrain_frag_shader);
+  render_model(display, &test_model, main_player.cam, false, model_geo_shader, model_frag_shader);
 }

@@ -30,9 +30,7 @@ typedef struct {
   float w;
 } clip_vertex;
 
-static inline void dot_float(float *out, float a, float b) {
-  *out = a * b;
-}
+static inline void dot_float(float *out, float a, float b) { *out = a * b; }
 
 static inline void dot_vec3(float *out, vec3 a, vec3 b) {
   *out = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -50,13 +48,18 @@ void draw_wireframe_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2,
                                       int debug);
 void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
                             uint8_t r, uint8_t g, uint8_t b, int debug);
-void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
-                              vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, vec3 pivot, int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-            uint8_t g, uint8_t b));
-void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
-                                        camera c, vec3 v1, vec3 v2, vec3 v3,
-                                        uint8_t r, uint8_t g, uint8_t b,
-                                        vec3 pos, vec3 rot, vec3 pivot,
-                                        int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-            uint8_t g, uint8_t b));
+void draw_tri3d_to_backbuffer(
+    SDL_Surface *surface, camera c, vec3 v1, vec3 v2, vec3 v3, uint8_t r,
+    uint8_t g, uint8_t b, vec3 pos, vec3 rot, vec3 pivot, int debug,
+    void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position,
+                            vec3 light_dir, uint8_t r, uint8_t g, uint8_t b),
+    void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                            vec3 normal));
+void draw_tri3d_to_backbuffer_zbuffered(
+    SDL_Surface *surface, uint32_t *zbuffer, camera c, vec3 v1, vec3 v2,
+    vec3 v3, uint8_t r, uint8_t g, uint8_t b, vec3 pos, vec3 rot, vec3 pivot,
+    int debug,
+    void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position,
+                            vec3 light_dir, uint8_t r, uint8_t g, uint8_t b),
+    void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                            vec3 normal));

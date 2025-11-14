@@ -443,7 +443,9 @@ void draw_tri_to_backbuffer(SDL_Surface *surface, vec2i v1, vec2i v2, vec2i v3,
 static void draw_tri_to_backbuffer_zbuffered(
     SDL_Surface *surface, uint32_t *zbuffer, vec2i v1, vec2i v2, vec2i v3,
     uint8_t r, uint8_t g, uint8_t b, float z1_over_w, float oow1,
-    float z2_over_w, float oow2, float z3_over_w, float oow3) {
+    float z2_over_w, float oow2, float z3_over_w, float oow3, vec3 normal,
+    void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                            vec3 normal)) {
 
   bbox2i bb = calculate_bbox2i_from_tri(v1, v2, v3);
   uint16_t sx = max(0, bb.min[0]), ex = min(surface->w - 1, bb.max[0]);
@@ -472,17 +474,27 @@ static void draw_tri_to_backbuffer_zbuffered(
         if (interp_oow <= 1e-8f)
           continue;
 
+        vec4 IN = (vec4){r, g, b, 255.0f};
+        vec4 FINAL_RGB;
+        fragment_shader(FINAL_RGB, IN, (vec2){u, v}, (vec3){u, v, w}, normal);
+
+        FINAL_RGB[0] *= FINAL_RGB[3] / 255;
+        FINAL_RGB[1] *= FINAL_RGB[3] / 255;
+        FINAL_RGB[2] *= FINAL_RGB[3] / 255;
+
         float z = u * z1_over_w + v * z2_over_w + w * z3_over_w;
-        set_pixel_zbuffered(surface, zbuffer, x, y, r, g, b, z);
+        set_pixel_zbuffered(surface, zbuffer, x, y, FINAL_RGB[0], FINAL_RGB[1], FINAL_RGB[2], z);
       }
     }
 }
 
-void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
-                              vec3 v3, uint8_t r, uint8_t g, uint8_t b,
-                              vec3 pos, vec3 rot, vec3 pivot, int debug,
-                              void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-                                             uint8_t g, uint8_t b)) {
+void draw_tri3d_to_backbuffer(
+    SDL_Surface *surface, camera c, vec3 v1, vec3 v2, vec3 v3, uint8_t r,
+    uint8_t g, uint8_t b, vec3 pos, vec3 rot, vec3 pivot, int debug,
+    void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position,
+                            vec3 light_dir, uint8_t r, uint8_t g, uint8_t b),
+    void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                            vec3 normal)) {
 
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
@@ -609,7 +621,9 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
       continue;
 
     vec4 FINAL_RGB;
-    shader(FINAL_RGB, normal_world, (vec2){0.0f, 0.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.5f, 0.5f, 0.5f}, r, g, b);
+    geometry_shader(FINAL_RGB, normal_world, (vec2){0.0f, 0.0f},
+                    (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.5f, 0.5f, 0.5f}, r, g,
+                    b);
 
     FINAL_RGB[0] *= FINAL_RGB[3] / 255;
     FINAL_RGB[1] *= FINAL_RGB[3] / 255;
@@ -624,12 +638,14 @@ void draw_tri3d_to_backbuffer(SDL_Surface *surface, camera c, vec3 v1, vec3 v2,
   }
 }
 
-void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
-                                        camera c, vec3 v1, vec3 v2, vec3 v3,
-                                        uint8_t r, uint8_t g, uint8_t b,
-                                        vec3 pos, vec3 rot, vec3 pivot,
-                                        int debug, void (*shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position, vec3 light_dir, uint8_t r,
-            uint8_t g, uint8_t b)) {
+void draw_tri3d_to_backbuffer_zbuffered(
+    SDL_Surface *surface, uint32_t *zbuffer, camera c, vec3 v1, vec3 v2,
+    vec3 v3, uint8_t r, uint8_t g, uint8_t b, vec3 pos, vec3 rot, vec3 pivot,
+    int debug,
+    void (*geometry_shader)(vec4 OUT, vec3 normal, vec2 uv, vec3 position,
+                            vec3 light_dir, uint8_t r, uint8_t g, uint8_t b),
+    void (*fragment_shader)(vec4 OUT, vec4 IN, vec2 uv, vec3 position,
+                            vec3 normal)) {
 
   mat4 model, view, proj, mv, mvp;
   update_model_matrix(&model, pos, pivot, rot);
@@ -762,7 +778,9 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
       continue;
 
     vec4 FINAL_RGB;
-    shader(FINAL_RGB, normal_world, (vec2){0.0f, 0.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.5f, 0.5f, 0.5f}, r, g, b);
+    geometry_shader(FINAL_RGB, normal_world, (vec2){0.0f, 0.0f},
+                    (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.5f, 0.5f, 0.5f}, r, g,
+                    b);
 
     FINAL_RGB[0] *= FINAL_RGB[3] / 255;
     FINAL_RGB[1] *= FINAL_RGB[3] / 255;
@@ -774,7 +792,7 @@ void draw_tri3d_to_backbuffer_zbuffered(SDL_Surface *surface, uint32_t *zbuffer,
     else
       draw_tri_to_backbuffer_zbuffered(
           surface, zbuffer, screen[0], screen[i], screen[i + 1], FINAL_RGB[0],
-          FINAL_RGB[1], FINAL_RGB[2], z_over_w[0], oow[0], z_over_w[i],
-          oow[i], z_over_w[i + 1], oow[i + 1]);
+          FINAL_RGB[1], FINAL_RGB[2], z_over_w[0], oow[0], z_over_w[i], oow[i],
+          z_over_w[i + 1], oow[i + 1], normal_world, fragment_shader);
   }
 }
