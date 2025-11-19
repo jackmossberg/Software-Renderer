@@ -137,7 +137,7 @@ void update_game(double deltatime, SDL_Event event) {
 void update_graphics(SDL_display *display) {
   clear_display(display, 15, 20, 45);
 
-  main_camera.rotation[0] = 0.0f;
+  main_camera.rotation[0] -= 0.05f;
   test_model.rotation[1] += 0.5f;
 
   render_model(display, &terrain, main_player.cam, false, terrain_geo_shader, terrain_frag_shader);
